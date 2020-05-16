@@ -88,11 +88,38 @@ User.init(
 
 Following RESTful API principles, a User login action results in a new authorization token being created and returned to the client. So, the `user-login` view POSTs the form data to the `/api/auth-tokens` route.
 
-Check out the `02-login` branch for clean starter code and open the `/routes/api/auth-tokens.js` module.
+Check out the `02-login` branch for clean starter code and open the `/routes/api/auth-tokens.js` module. A lot of this logic could be better placed in the User model, but we will do it in the route handler for simplicity.
 
 ### Verify password
 
-const user = await User.findOne({ email: req.body.email })
+Load the target user based on the `req.body.email` property. You will need to use the `withPassword` scope that you created earlier.
+
+```js
+const user = await User.scope('withPassword').findOne({
+  where: { email: req.body.email }
+})
+if (!user) throw new Error('Bad email or password')
+```
+
+Verify the password with `argon2`. The `verify` method encrypts the login password and then compares with the encrypted password from the database to see if they match.
+
+```js
+const didAuthenticate = await argon2.verify(user.password, req.body.password)
+if (!didAuthenticate) throw new Error('Bad email or password')
+```
+
+### Create a JWT token
+
+Install the [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) NPM module.
+
+Use the `jwt.sign()` method to encode the `user.id` and sign the token with your 'superSecretKey'. Normally, this key would be stored in an environment variable, but you can hard code it for this demo example.
+
+```js
+const token = jwt.sign({ id: user.id }, 'superSecretKey')
+res.status(201).json({ data: token })
+```
+
+Success!! The user can now login. The token that is returned must be passed in the header of fetch requests to protected routes.
 
 ## Protected Routes
 
