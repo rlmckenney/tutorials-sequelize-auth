@@ -1,14 +1,28 @@
 const router = require('express').Router()
-// const { User } = require('../../models')
+const argon2 = require('argon2')
+const jwt = require('jsonwebtoken')
+const { User } = require('../../models')
 
 router.post('/', async (req, res, next) => {
   try {
-    // load the target user based on the `req.body.email` property
-    // verify the password with `argon2`
-    // create a real JWT token
-    const token = 'I am a token'
+    // Check if the User exists
+    const user = await User.scope('withPassword').findOne({
+      where: { email: req.body.email }
+    })
+    if (!user) throw new Error('Bad email or password')
+
+    // Verify the password
+    const didAuthenticate = await argon2.verify(
+      user.password,
+      req.body.password
+    )
+    if (!didAuthenticate) throw new Error('Bad email or password')
+
+    // Encode the user.id in the JWT
+    const token = jwt.sign({ id: user.id }, 'superSecretKey')
     res.status(201).json({ data: token })
   } catch (err) {
+    // @todo create a ResourceNotFoundException class
     next(err)
   }
 })
