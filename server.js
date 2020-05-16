@@ -36,9 +36,12 @@ app.get('/', (req, res) => {
 })
 
 app.get('/register', (req, res) => res.render('user-register'))
+app.get('/login', (req, res) => res.render('user-login'))
 
 // API routes
 app.use('/api/users', require('./routes/api/users'))
+app.use('/api/posts', require('./routes/api/posts'))
+app.use('/api/auth-tokens', require('./routes/api/auth-tokens'))
 
 // Final route handler is a catch-all error handler middleware function
 app.use(require('./middleware/errorHandler'))

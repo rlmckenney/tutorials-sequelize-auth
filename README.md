@@ -86,7 +86,13 @@ User.init(
 
 ## Login
 
-Check out the `02-login` branch.
+Following RESTful API principles, a User login action results in a new authorization token being created and returned to the client. So, the `user-login` view POSTs the form data to the `/api/auth-tokens` route.
+
+Check out the `02-login` branch for clean starter code and open the `/routes/api/auth-tokens.js` module.
+
+### Verify password
+
+const user = await User.findOne({ email: req.body.email })
 
 ## Protected Routes
 

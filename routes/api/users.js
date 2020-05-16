@@ -6,9 +6,14 @@ router.post('/', async (req, res, next) => {
     const user = await User.create(req.body)
     res.status(201).json({ data: user })
   } catch (err) {
-    console.log(err)
     next(err)
   }
+})
+
+router.get('/', async (req, res, next) => {
+  User.findAll()
+    .then(users => res.status(200).json({ data: users }))
+    .catch(next)
 })
 
 module.exports = router

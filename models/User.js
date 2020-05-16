@@ -1,7 +1,15 @@
+const argon2 = require('argon2')
 const { Model } = require('sequelize')
 
 module.exports = (sequelize, DataTypes) => {
-  class User extends Model {}
+  class User extends Model {
+    toJSON () {
+      const attributes = super.toJSON()
+      delete attributes.password
+      return attributes
+    }
+  }
+
   User.init(
     {
       firstName: {
@@ -16,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       email: {
         type: DataTypes.STRING,
+        unique: true,
         allowNull: false,
         validate: { isEmail: true }
       },
@@ -25,8 +34,26 @@ module.exports = (sequelize, DataTypes) => {
         validate: { notEmpty: true, len: [6] }
       }
     },
-    { sequelize }
+    {
+      sequelize,
+      defaultScope: {
+        attributes: { exclude: ['password'] }
+      },
+      scopes: {
+        withPassword: { attributes: {} }
+      }
+    }
   )
+
+  User.beforeSave(async user => {
+    if (user.changed('password')) {
+      user.password = await argon2.hash(user.password, {
+        type: argon2.argon2d,
+        memoryCost: 2 ** 20,
+        hashLength: 50
+      })
+    }
+  })
 
   return User
 }

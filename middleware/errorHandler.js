@@ -3,6 +3,7 @@ function isValidationError (err) {
 }
 
 module.exports = (err, req, res, next) => {
+  console.log(err)
   if (isValidationError(err)) {
     res.status(400).json({ errors: err.errors })
   } else {
