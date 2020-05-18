@@ -17,9 +17,22 @@ There are many libraries and SaaS services that can help manage this in your app
 
 To give you a better understanding of how it works, we'll build a simple local authentication system for your API routes that uses a Sequelize User model and JWTs.
 
-## User Registration
+There are several branches of this tutorial repo. Each has the working solution for the previous step and any additional starter code needed to support the next step.
 
-The starter code in the `Unsolved` folder has a `/register` route that displays a simple (un-styled) user registration form. To more easily demonstrate the application logic it just uses the built-in browser form submission functionality. The results returned from the `/api/users` route will be displayed in the browser on completion.
+```bash
+git branch
+  01-register
+  02-login
+  03-auth-middleware
+  04-final-solution
+* master
+```
+
+As you follow-along below, checkout the corresponding branch and try to implement the solution on your own before looking at the solution in the next branch.
+
+## 1. User Registration
+
+The starter code in the `01-register` branch has a `/register` route that displays a simple (un-styled) user registration form. To more easily demonstrate the application logic it just uses the built-in browser form submission functionality. The results returned from the `/api/users` route will be displayed in the browser on completion.
 
 You would normally want to do this with an AJAX fetch call and then either prompt the user to correct validation errors, or redirect to another page of the application. We will look at this in a later module.
 
@@ -84,7 +97,7 @@ User.init(
 )
 ```
 
-## Login
+## 2. Login
 
 Following RESTful API principles, a User login action results in a new authorization token being created and returned to the client. So, the `user-login` view POSTs the form data to the `/api/auth-tokens` route.
 
@@ -121,7 +134,7 @@ res.status(201).json({ data: token })
 
 Success!! The user can now login. The token that is returned must be passed in the header of fetch requests to protected routes.
 
-## Protected Routes
+## 3. Protected Routes
 
 The primary reason for having users register and login is to restrict access to certain application features or data resources. One of the most common (and simplest to implement) is a special route to retrieve the current logged-in user's profile.
 
