@@ -11,7 +11,7 @@ There are several techniques for managing user registration and authentication:
 There are many libraries and SaaS services that can help manage this in your application. e.g.
 
 - Passport.js
-- Auht0
+- Auth0
 - Okta
 - "role your own" solutions
 
@@ -86,8 +86,97 @@ User.init(
 
 ## Login
 
-Check out the `02-login` branch.
+Following RESTful API principles, a User login action results in a new authorization token being created and returned to the client. So, the `user-login` view POSTs the form data to the `/api/auth-tokens` route.
+
+Check out the `02-login` branch for clean starter code and open the `/routes/api/auth-tokens.js` module. A lot of this logic could be better placed in the User model, but we will do it in the route handler for simplicity.
+
+### Verify password
+
+Load the target user based on the `req.body.email` property. You will need to use the `withPassword` scope that you created earlier.
+
+```js
+const user = await User.scope('withPassword').findOne({
+  where: { email: req.body.email }
+})
+if (!user) throw new Error('Bad email or password')
+```
+
+Verify the password with `argon2`. The `verify` method encrypts the login password and then compares with the encrypted password from the database to see if they match.
+
+```js
+const didAuthenticate = await argon2.verify(user.password, req.body.password)
+if (!didAuthenticate) throw new Error('Bad email or password')
+```
+
+### Create a JWT token
+
+Install the [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) NPM module.
+
+Use the `jwt.sign()` method to encode the `user.id` and sign the token with your 'superSecretKey'. Normally, this key would be stored in an environment variable, but you can hard code it for this demo example.
+
+```js
+const token = jwt.sign({ id: user.id }, 'superSecretKey')
+res.status(201).json({ data: token })
+```
+
+Success!! The user can now login. The token that is returned must be passed in the header of fetch requests to protected routes.
 
 ## Protected Routes
 
-Check out the `03-auth-middleware` branch.
+The primary reason for having users register and login is to restrict access to certain application features or data resources. One of the most common (and simplest to implement) is a special route to retrieve the current logged-in user's profile.
+
+Check out the `03-auth-middleware` branch for clean starter code and open the `/routes/api/users.js` module.
+
+Add a new **GET /api/users/me** route. This route will take no `req.params`, and no `req.body` data. It will only return the user profile for the user associated with the `Authorization` token in the `req.headers`.
+
+You will need to:
+
+1.  Extract the JWT authentication token from the request headers
+
+    The client application will pass the token in a request header called `Authorization`. The corresponding value will be in the form of `Bearer {{token}}`, where `{{token}}` is a placeholder for the actual JWT. Note the word _Bearer_ is capitalized and followed be a space.
+
+    You can use the `req.header('Authorization')` function to get the token from the request headers and, if the token is missing, send an authentication error.
+
+2.  Verify the JWT and get the user's `id` from the token's payload.
+
+    ```js
+    const payload = jwt.verify(token, jwtPrivateKey)
+    ```
+
+3.  Find the User from the database using the `id` from the token's payload
+
+    ```js
+    const user = await User.findByPk(payload.id)
+    ```
+
+4.  Return the User object as JSON
+
+5.  If any of the above steps fail, return an error. Using the [JSON:API standard](https://jsonapi.org/), the response for an error might look like this ...
+
+```js
+res.status(401).send({
+  errors: [
+    {
+      status: '401',
+      title: 'Authentication failed',
+      detail: 'Invalid bearer token'
+    }
+  ]
+})
+```
+
+### Extract to middleware
+
+Since getting the currently logged-in user is a common prerequisite for granting access to many route handlers, it is recommended to move this logic into a reusable "middleware" function -- e.g. /middleware/getAuthUser.js
+
+Then, call that middleware function before the main route handler function. If there is a valid user, it will be available on the `req.user` property. Any error conditions are already handled by the `getAuthUser` middleware.
+
+```js
+router.get('/me', getAuthUser, async (req, res) =>
+  res.status(200).json({ data: req.user })
+)
+```
+
+### Client side examples
+
+Examine the `user-login.handlebars` and `user-profile.handlebars` modules to see how to save the authentication token to localStorage and then send it in the request headers for protected resource routes.
