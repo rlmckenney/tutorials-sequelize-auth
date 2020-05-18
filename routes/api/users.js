@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const getAuthUser = require('../../middleware/getAuthUser')
 const { User } = require('../../models')
 
 router.post('/', async (req, res, next) => {
@@ -15,5 +16,9 @@ router.get('/', async (req, res, next) => {
     .then(users => res.status(200).json({ data: users }))
     .catch(next)
 })
+
+router.get('/me', getAuthUser, async (req, res) =>
+  res.status(200).json({ data: req.user })
+)
 
 module.exports = router

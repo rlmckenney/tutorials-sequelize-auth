@@ -1,5 +1,5 @@
 <h1>Login</h1>
-<form action="/api/auth-tokens" method="post">
+<form id="login-form" action="/api/auth-tokens" method="post">
   <label>
     Email <input type="email" name="email" id="email">
   </label>
@@ -8,3 +8,35 @@
   </label>
   <button type="submit">Login</button>
 </form>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('login-form')
+    form.addEventListener('submit', formHandler)
+
+    function formHandler(event) {
+      event.preventDefault()
+      const credentials = {
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value.trim()
+      }
+      fetch('/api/auth-tokens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials)
+      })
+        .then(res => {
+          if (res.ok) {
+            return res.json()
+          } else {
+            return Promise.reject(res.json())
+          }
+        })
+        .then(({ data }) => {
+          window.localStorage.setItem('authToken', data.token)
+          window.location.assign('/me')
+        })
+        .catch(console.log)
+    }
+  })
+</script>

@@ -37,6 +37,7 @@ app.get('/', (req, res) => {
 
 app.get('/register', (req, res) => res.render('user-register'))
 app.get('/login', (req, res) => res.render('user-login'))
+app.get('/me', (req, res) => res.render('user-profile'))
 
 // API routes
 app.use('/api/users', require('./routes/api/users'))

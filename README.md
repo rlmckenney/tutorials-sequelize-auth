@@ -123,4 +123,60 @@ Success!! The user can now login. The token that is returned must be passed in t
 
 ## Protected Routes
 
-Check out the `03-auth-middleware` branch.
+The primary reason for having users register and login is to restrict access to certain application features or data resources. One of the most common (and simplest to implement) is a special route to retrieve the current logged-in user's profile.
+
+Check out the `03-auth-middleware` branch for clean starter code and open the `/routes/api/users.js` module.
+
+Add a new **GET /api/users/me** route. This route will take no `req.params`, and no `req.body` data. It will only return the user profile for the user associated with the `Authorization` token in the `req.headers`.
+
+You will need to:
+
+1.  Extract the JWT authentication token from the request headers
+
+    The client application will pass the token in a request header called `Authorization`. The corresponding value will be in the form of `Bearer {{token}}`, where `{{token}}` is a placeholder for the actual JWT. Note the word _Bearer_ is capitalized and followed be a space.
+
+    You can use the `req.header('Authorization')` function to get the token from the request headers and, if the token is missing, send an authentication error.
+
+2.  Verify the JWT and get the user's `id` from the token's payload.
+
+    ```js
+    const payload = jwt.verify(token, jwtPrivateKey)
+    ```
+
+3.  Find the User from the database using the `id` from the token's payload
+
+    ```js
+    const user = await User.findByPk(payload.id)
+    ```
+
+4.  Return the User object as JSON
+
+5.  If any of the above steps fail, return an error. Using the [JSON:API standard](https://jsonapi.org/), the response for an error might look like this ...
+
+```js
+res.status(401).send({
+  errors: [
+    {
+      status: '401',
+      title: 'Authentication failed',
+      detail: 'Invalid bearer token'
+    }
+  ]
+})
+```
+
+### Extract to middleware
+
+Since getting the currently logged-in user is a common prerequisite for granting access to many route handlers, it is recommended to move this logic into a reusable "middleware" function -- e.g. /middleware/getAuthUser.js
+
+Then, call that middleware function before the main route handler function. If there is a valid user, it will be available on the `req.user` property. Any error conditions are already handled by the `getAuthUser` middleware.
+
+```js
+router.get('/me', getAuthUser, async (req, res) =>
+  res.status(200).json({ data: req.user })
+)
+```
+
+### Client side examples
+
+Examine the `user-login.handlebars` and `user-profile.handlebars` modules to see how to save the authentication token to localStorage and then send it in the request headers for protected resource routes.
