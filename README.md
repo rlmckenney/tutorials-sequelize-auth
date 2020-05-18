@@ -11,7 +11,7 @@ There are several techniques for managing user registration and authentication:
 There are many libraries and SaaS services that can help manage this in your application. e.g.
 
 - Passport.js
-- Auht0
+- Auth0
 - Okta
 - "role your own" solutions
 
