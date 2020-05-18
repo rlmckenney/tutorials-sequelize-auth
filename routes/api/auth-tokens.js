@@ -20,7 +20,7 @@ router.post('/', async (req, res, next) => {
 
     // Encode the user.id in the JWT
     const token = jwt.sign({ id: user.id }, 'superSecretKey')
-    res.status(201).json({ data: token })
+    res.status(201).json({ data: { token } })
   } catch (err) {
     // @todo create a ResourceNotFoundException class
     next(err)
