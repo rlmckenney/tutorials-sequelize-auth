@@ -1,0 +1,28 @@
+<h1>My Profile</h1>
+<pre id="profile"></pre>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const outputTarget = document.getElementById('profile')
+    const token = localStorage.getItem('authToken')
+    fetch('/api/users/me', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then(res => {
+        if (res.ok) {
+          return res.json()
+        } else {
+          return Promise.reject(res.json())
+        }
+      })
+      .then(({ data }) => {
+        outputTarget.textContent = JSON.stringify(data, null, 2)
+      })
+      .catch(console.log)
+  })
+
+</script>
